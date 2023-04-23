@@ -103,8 +103,7 @@ class QLearningAgent(ReinforcementAgent):
         epsilon = self.epsilon
         if util.flipCoin(epsilon):
             #picking randomly from our legal actions if epsilon is made
-            random = random.choice(self.getLegalActions(state)) 
-            return random
+            return random.choice(self.getLegalActions(state)) 
         else:
             #otherwise, we just want to get our Q val action
             return self.computeActionFromQValues(state)
@@ -183,14 +182,24 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        q = 0
+        #iterates through features and updates q values for each feature retrieved
+        for f in self.featExtractor.getFeatures(state,action):
+            feat = (self.weights[f] * self.featExtractor.getFeatures(state,action)[f])
+            q = q + feat
+        return q
 
     def update(self, state, action, nextState, reward):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #getting our delta value for the feature vector
+        delta = reward + (self.discount * self.getValue(nextState) - self.getQValue(state, action))
+        #updating the vector for all features
+        for f in self.featExtractor.getFeatures(state, action):
+          val = self.alpha * self.featExtractor.getFeatures(state, action)[f] * delta
+          self.weights[f] = self.weights[f]+val
 
     def final(self, state):
         "Called at the end of each game."
