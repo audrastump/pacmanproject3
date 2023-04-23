@@ -208,4 +208,45 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        myQueue = util.PriorityQueue()
 
+        #Dictionary to keep track of the sets of predecessors for each state, using the state as the key
+        predecessors = {}
+
+        #Iterate over all states to get predecessors
+        for state in self.mdp.getStates():
+          if not self.mdp.isTerminal(state):
+            q_values = []
+            #Compute predecessor states
+            for action in self.mdp.getPossibleActions(state):
+              for (nextState, prob) in self.mdp.getTransitionStatesAndProbs(state, action):
+                if not nextState in predecessors.keys():
+                  predecessors[nextState] = set()
+                if prob > 0:
+                  predecessors[nextState].add(state)
+                  q_values.append(self.computeQValueFromValues(state, action))
+            #Find the absolute value of the difference between the current value of s in self.values and the highest Q-value across all possible actions from s (this represents what the value should be); call this number diff. Do NOT update self.values[s] in this step.  
+            diff = abs(self.values[state] - max(q_values))
+            myQueue.update(state, -1*diff)
+            #self.values[state] = max(q_values) 
+
+        for i in range(self.iterations):
+          if myQueue.isEmpty():
+            return
+          currState = myQueue.pop()
+          if not self.mdp.isTerminal(currState):
+            q_values = []
+            for action in self.mdp.getPossibleActions(currState):
+              for (nextState, prob) in self.mdp.getTransitionStatesAndProbs(currState, action):                  
+                if prob > 0:
+                  q_values.append(self.computeQValueFromValues(currState, action))
+          self.values[currState] = max(q_values)
+
+          for predecessor in predecessors[currState]:
+            q_values_predecessor = []
+            #Compute q values
+            for action in self.mdp.getPossibleActions(predecessor):
+              q_values_predecessor.append(self.computeQValueFromValues(predecessor, action))
+            diff = abs(self.values[predecessor] - max(q_values_predecessor))
+            if diff > self.theta:
+              myQueue.update(predecessor, -1*diff)
